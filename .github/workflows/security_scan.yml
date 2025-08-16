@@ -62,22 +62,18 @@ jobs:
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
         script: |
-          const output = `## AI Security Scan Results
+          // Define a string that will be the comment body
+          let commentBody = '## AI Security Scan Results\n\n';
+          commentBody += '<details>\n<summary>Click to view details from AI scanner</summary>\n\n';
+          commentBody += '```\n' + '${{ steps.ai_scan.outputs.scan_output }}' + '\n```\n';
+          commentBody += '</details>\n\n';
+          commentBody += '*Semgrep results are available in the Security tab.*\n';
 
-<details>
-<summary>Click to view details from AI scanner</summary>
-
-\`\`\`
-${{ steps.ai_scan.outputs.scan_output }}
-\`\`\`
-</details>
-
-*Semgrep results are available in the Security tab.*
-          `;
           github.rest.issues.createComment({
             issue_number: context.issue.number,
             owner: context.repo.owner,
             repo: context.repo.repo,
-            body: output
+            body: commentBody
           });
+```
 
