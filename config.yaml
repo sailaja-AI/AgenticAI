@@ -1,0 +1,9 @@
+# Model for semantic code analysis
+code_analysis_model: "microsoft/codebert-base"
+
+# Vulnerability patterns (simple examples for now)
+vulnerability_patterns:
+  - name: "Insecure Subprocess Call"
+    # We will detect code like subprocess.call(..., shell=True)
+    description: "Using shell=True with subprocess can lead to shell injection."
+    cwe: "CWE-78"

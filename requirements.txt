@@ -1,0 +1,13 @@
+transformers
+huggingface_hub
+torch
+gymnasium
+pyyaml
+stable-baselines3
+sb3-contrib
+ir_datasets
+scikit-learn
+datasets
+fastapi
+uvicorn[standard]
+

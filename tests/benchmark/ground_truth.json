@@ -1,0 +1,16 @@
+{
+  "vulnerable_example.py": {
+    "is_vulnerable": true,
+    "vulnerabilities": [
+      {
+        "line": 5,
+        "cwe": "CWE-78",
+        "type": "INSECURE_SUBPROCESS"
+      }
+    ]
+  },
+  "clean_example.py": {
+    "is_vulnerable": false,
+    "vulnerabilities": []
+  }
+}

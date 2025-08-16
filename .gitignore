@@ -1,0 +1,29 @@
+# Python artifacts
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual Environments
+.env
+.venv
+env/
+venv/
+
+# IDE / Editor specific files
+.vscode/
+.idea/
+
+# Logs
+logs/
+*.log
+
+# --- Project Specific Ignores ---
+
+# Ignore trained models and results
+results_codebert/
+rl_model.zip
+
+# Ignore data folders if they are very large and can be downloaded separately
+# data/processed/
+# data/SATE-IV/
