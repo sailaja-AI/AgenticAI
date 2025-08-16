@@ -19,6 +19,28 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
 
+    # --- NEW STEP: DOWNLOAD MODELS ---
+    # This step downloads the trained models from your GitHub Release.
+    - name: Download Trained Models
+      run: |
+        # Download the RL agent model
+        gh release download v1.0.0 -p 'rl_model.zip' --clobber
+
+        # Download the fine-tuned CodeBERT model and unzip it
+        gh release download v1.0.0 -p 'final_model.zip' --clobber
+        unzip -o final_model.zip -d results_codebert/
+      env:
+        # The GITHUB_TOKEN is automatically provided by GitHub Actions
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
     - name: Run AI Vulnerability Scan
       run: |
+        # Verify the models were downloaded before running the scan
+        echo "--- Verifying downloaded files ---"
+        ls -l
+        ls -l results_codebert/final_model/
+        echo "----------------------------------"
+
         python -m src vulnerable_app.py
+```
+
