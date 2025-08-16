@@ -1,6 +1,10 @@
 name: AI Security Scan
 
-on: [push, pull_request]
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
 
 jobs:
   security-scan:
@@ -21,23 +25,59 @@ jobs:
 
     - name: Download Trained Models from GitHub Release
       run: |
-        # The gh CLI is pre-installed on GitHub runners
-        # Download the RL agent model
         gh release download v1.0.0 --pattern 'rl_model.zip' --clobber
-
-        # Download the fine-tuned CodeBERT model and unzip it
         gh release download v1.0.0 --pattern 'final_model.zip' --clobber
         unzip -o final_model.zip -d results_codebert/
       env:
-        # The GITHUB_TOKEN is automatically provided by GitHub Actions
-        # It gives the workflow permission to download from releases in the same repository.
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Run AI Vulnerability Scan
+    - name: Run Semgrep Scan
+      uses: returntocorp/semgrep-action@v1
+      with:
+        # Semgrep rules to use. You can specify a config file or a registry rule.
+        # For example, to scan for Python rules:
+        # config: p/python
+        # Or, if you have custom rules in your repo:
+        # config: .semgrep/rules.yaml
+        config: auto
+      env:
+        SEMGREP_APP_TOKEN: ${{ secrets.SEMGREP_APP_TOKEN }} # Optional, for Semgrep App
+
+    - name: Run AI Vulnerability Scan (and capture output)
+      id: ai_scan
       run: |
-        echo "--- Verifying downloaded files for debugging ---"
-        ls -lR
-        echo "-----------------------------------------------"
-        
-        python -m src vulnerable_app.py
+        echo "--- Starting AI Vulnerability Scan ---"
+        # Run your Python script and capture its output
+        # We redirect stderr to stdout so all messages are captured.
+        SCAN_OUTPUT=$(python -m src vulnerable_app.py 2>&1)
+        echo "$SCAN_OUTPUT"
+        # Set the output for the next step
+        echo "scan_output<<EOF" >> $GITHUB_OUTPUT
+        echo "$SCAN_OUTPUT" >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
+
+    - name: Post Analysis Results to PR Comment
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v6
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        script: |
+          const output = `## AI Security Scan Results
+
+<details>
+<summary>Click to view details from AI scanner</summary>
+
+\`\`\`
+${{ steps.ai_scan.outputs.scan_output }}
+\`\`\`
+</details>
+
+*Semgrep results are available in the Security tab.*
+          `;
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: output
+          });
 
