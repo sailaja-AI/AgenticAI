@@ -7,7 +7,7 @@ import torch # Make sure torch is imported for tensor operations
 # Configuration for training
 FILE_TO_SCAN = "vulnerable_app.py" # Using a known vulnerable file for training environment
 MODEL_SAVE_PATH = "./rl_model.zip" # Consistent with PatchSuggesterAgent
-TOTAL_TIMESTEPS = 10000 # Number of timesteps for training the RL agent
+TOTAL_TIMESTEPS = 500 # REDUCED for faster CPU training
 
 def train_agent():
     """
