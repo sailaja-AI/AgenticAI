@@ -104,7 +104,7 @@ if __name__ == "__main__":
     print("Setting up training arguments...")
     training_args = TrainingArguments(
         output_dir=OUTPUT_DIR,
-        evaluation_strategy="epoch",
+        eval_strategy="epoch", # CORRECTED: Changed 'evaluation_strategy' to 'eval_strategy'
         learning_rate=LEARNING_RATE,
         per_device_train_batch_size=BATCH_SIZE,
         per_device_eval_batch_size=BATCH_SIZE,
