@@ -12,7 +12,7 @@ MODEL_NAME = "microsoft/codebert-base"
 # --- NEW: GOOGLE DRIVE BASE PATH ---
 # IMPORTANT: Update this if your Google Drive structure is different
 GOOGLE_DRIVE_DATA_BASE_PATH = "/content/drive/MyDrive/AgentAI_Data" # Assuming processed data is here
-PROCESCESSED_DATA_OUTPUT_DIR = os.path.join(GOOGLE_DRIVE_DATA_BASE_PATH, "processed_jsonl") # Where prepare_dataset saves
+PROCESSED_DATA_OUTPUT_DIR = os.path.join(GOOGLE_DRIVE_DATA_BASE_PATH, "processed_jsonl") # Where prepare_dataset saves
 
 OUTPUT_DIR = "./results_codebert" # Stored locally in Colab session initially
 BATCH_SIZE = 16
@@ -43,11 +43,11 @@ if __name__ == "__main__":
     print("--- Starting CodeBERT Fine-tuning ---")
 
     # 1. Load Pre-processed Dataset from JSONL files (from Google Drive)
-    print(f"Loading pre-processed dataset from {PROCESCESSED_DATA_OUTPUT_DIR}...")
+    print(f"Loading pre-processed dataset from {PROCESSED_DATA_OUTPUT_DIR}...")
     try:
-        train_path = os.path.join(PROCESCESSED_DATA_OUTPUT_DIR, 'train.jsonl')
-        val_path = os.path.join(PROCESCESSED_DATA_OUTPUT_DIR, 'val.jsonl')
-        test_path = os.path.join(PROCESCESSED_DATA_OUTPUT_DIR, 'test.jsonl')
+        train_path = os.path.join(PROCESSED_DATA_OUTPUT_DIR, 'train.jsonl')
+        val_path = os.path.join(PROCESSED_DATA_OUTPUT_DIR, 'val.jsonl')
+        test_path = os.path.join(PROCESSED_DATA_OUTPUT_DIR, 'test.jsonl')
 
         # Check if files exist before loading
         if not os.path.exists(train_path):
@@ -68,7 +68,7 @@ if __name__ == "__main__":
         print("Training dataset is empty. Please ensure data exists in the processed JSONL files.")
         exit()
 
-    print(f"Total training examples: {len(raw_datasets['train')}")
+    print(f"Total training examples: {len(raw_datasets['train'])}")
     if 'validation' in raw_datasets:
     print(f"Total validation examples: {len(raw_datasets['validation'])}")
     if 'test' in raw_datasets:
@@ -92,7 +92,7 @@ if __name__ == "__main__":
     print("Setting up training arguments...")
     training_args = TrainingArguments(
         output_dir=OUTPUT_DIR,
-        eval_strategy="epoch", # Use eval_strategy as recommended
+        evaluation_strategy="epoch", # Use evaluation_strategy as recommended
         learning_rate=LEARNING_RATE,
         per_device_train_batch_size=BATCH_SIZE,
         per_device_eval_batch_size=BATCH_SIZE,
@@ -123,7 +123,7 @@ if __name__ == "__main__":
 
     if "test" in tokenized_datasets and tokenized_datasets["test"] is not None:
     print("Evaluating on test set...")
-        test_results = trainer.evaluate(eval_dataset=tokenized_datasets["test")
+        test_results = trainer.evaluate(eval_dataset=tokenized_datasets["test"])
     print("--- Test Results ---")
     print(test_results)
     else:
