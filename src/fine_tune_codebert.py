@@ -44,6 +44,7 @@ if __name__ == "__main__":
 
     # 1. Load Pre-processed Dataset from JSONL files (from Google Drive)
     print(f"Loading pre-processed dataset from {PROCESSED_DATA_OUTPUT_DIR}...")
+
     try:
         train_path = os.path.join(PROCESSED_DATA_OUTPUT_DIR, 'train.jsonl')
         val_path = os.path.join(PROCESSED_DATA_OUTPUT_DIR, 'val.jsonl')
@@ -54,11 +55,21 @@ if __name__ == "__main__":
             print(f"Error: Training data not found at {train_path}. Please run src/prepare_dataset.py in Colab first.")
             exit()
     
-        raw_datasets = load_dataset('json', data_files={
-            'train': train_path,
-            'validation': val_path, # Ensure val.jsonl exists or handle its absence
-            'test': test_path       # Ensure test.jsonl exists or handle its absence
-        })
+        # Load datasets. load_dataset can handle missing files by returning empty, but we'll check.
+        raw_datasets_dict = {}
+        raw_datasets_dict['train'] = load_dataset('json', data_files=train_path, split='train')
+
+        if os.path.exists(val_path):
+            raw_datasets_dict['validation'] = load_dataset('json', data_files=val_path, split='train')
+        else:
+            print(f"Warning: Validation data not found at {val_path}.")
+
+        if os.path.exists(test_path):
+            raw_datasets_dict['test'] = load_dataset('json', data_files=test_path, split='train')
+        else:
+            print(f"Warning: Test data not found at {test_path}.")
+
+        raw_datasets = DatasetDict(raw_datasets_dict)
     except Exception as e:
         print(f"Could not load dataset from {PROCESSED_DATA_OUTPUT_DIR}. Error: {e}")
         print("Please ensure you have run 'src/prepare_dataset.py' in Colab first to create train.jsonl, val.jsonl, and test.jsonl.")
@@ -70,7 +81,7 @@ if __name__ == "__main__":
 
     print(f"Total training examples: {len(raw_datasets['train'])}")
     if 'validation' in raw_datasets:
-    print(f"Total validation examples: {len(raw_datasets['validation'])}")
+        print(f"Total validation examples: {len(raw_datasets['validation'])}")
     if 'test' in raw_datasets:
         print(f"Total test examples: {len(raw_datasets['test'])}")
     print("Dataset loaded. Example entry from training set:")
@@ -92,7 +103,7 @@ if __name__ == "__main__":
     print("Setting up training arguments...")
     training_args = TrainingArguments(
         output_dir=OUTPUT_DIR,
-        evaluation_strategy="epoch", # Use evaluation_strategy as recommended
+        evaluation_strategy="epoch",
         learning_rate=LEARNING_RATE,
         per_device_train_batch_size=BATCH_SIZE,
         per_device_eval_batch_size=BATCH_SIZE,
@@ -122,14 +133,14 @@ if __name__ == "__main__":
     trainer.train()
 
     if "test" in tokenized_datasets and tokenized_datasets["test"] is not None:
-    print("Evaluating on test set...")
+        print("Evaluating on test set...")
         test_results = trainer.evaluate(eval_dataset=tokenized_datasets["test"])
-    print("--- Test Results ---")
-    print(test_results)
+        print("--- Test Results ---")
+        print(test_results)
     else:
         print("No test dataset available for evaluation.")
-    
-    # 7. Save Model (locally in Colab session) and then potentially to Drive
+
+    # 7. Save Model
     print(f"Saving model to {OUTPUT_DIR}/final_model...")
     trainer.save_model(os.path.join(OUTPUT_DIR, "final_model"))
     print("Model saved.")
@@ -141,7 +152,6 @@ if __name__ == "__main__":
         print("Attempting to save trained model to Google Drive...")
         drive_model_path = os.path.join(GOOGLE_DRIVE_DATA_BASE_PATH, "trained_models", "final_model")
         os.makedirs(drive_model_path, exist_ok=True)
-        # Use shutil.copytree for directories, dirs_exist_ok=True for Python 3.8+
         shutil.copytree(os.path.join(OUTPUT_DIR, "final_model"), drive_model_path, dirs_exist_ok=True)
         print(f"Model saved to Google Drive at {drive_model_path}")
     except Exception as e:
