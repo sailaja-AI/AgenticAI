@@ -4,14 +4,14 @@ from datasets import Dataset, DatasetDict, load_dataset, concatenate_datasets # 
 from sklearn.metrics import precision_recall_fscore_support, confusion_matrix, accuracy_score
 import numpy as np
 import os
-import shutil # Added for saving to Google Drive
+import shutil # Import shutil for saving models to Drive
 
 # Configuration
 MODEL_NAME = "microsoft/codebert-base"
 
 # --- NEW: GOOGLE DRIVE BASE PATH ---
 # IMPORTANT: Update this if your Google Drive structure is different
-GOOGLE_DRIVE_DATA_BASE_PATH = "/content/drive/MyDrive/AgentAI_Data" # Assuming processed data is here
+GOOGLE_DRIVE_DATA_BASE_PATH = "/content/drive/MyDrive/AgentAI_Data" # Assuming raw/processed data is here
 PROCESSED_DATA_OUTPUT_DIR = os.path.join(GOOGLE_DRIVE_DATA_BASE_PATH, "processed_jsonl") # Where prepare_dataset saves
 
 OUTPUT_DIR = "./results_codebert" # Stored locally in Colab session initially
@@ -44,7 +44,7 @@ if __name__ == "__main__":
 
     # 1. Load Pre-processed Dataset from JSONL files (from Google Drive)
     print(f"Loading pre-processed dataset from {PROCESSED_DATA_OUTPUT_DIR}...")
-
+    
     try:
         train_path = os.path.join(PROCESSED_DATA_OUTPUT_DIR, 'train.jsonl')
         val_path = os.path.join(PROCESSED_DATA_OUTPUT_DIR, 'val.jsonl')
@@ -54,7 +54,7 @@ if __name__ == "__main__":
         if not os.path.exists(train_path):
             print(f"Error: Training data not found at {train_path}. Please run src/prepare_dataset.py in Colab first.")
             exit()
-    
+        
         # Load datasets. load_dataset can handle missing files by returning empty, but we'll check.
         raw_datasets_dict = {}
         raw_datasets_dict['train'] = load_dataset('json', data_files=train_path, split='train')
@@ -63,18 +63,19 @@ if __name__ == "__main__":
             raw_datasets_dict['validation'] = load_dataset('json', data_files=val_path, split='train')
         else:
             print(f"Warning: Validation data not found at {val_path}.")
-
+            
         if os.path.exists(test_path):
             raw_datasets_dict['test'] = load_dataset('json', data_files=test_path, split='train')
         else:
             print(f"Warning: Test data not found at {test_path}.")
 
         raw_datasets = DatasetDict(raw_datasets_dict)
+
     except Exception as e:
         print(f"Could not load dataset from {PROCESSED_DATA_OUTPUT_DIR}. Error: {e}")
         print("Please ensure you have run 'src/prepare_dataset.py' in Colab first to create train.jsonl, val.jsonl, and test.jsonl.")
         exit()
-
+    
     if len(raw_datasets["train"]) == 0:
         print("Training dataset is empty. Please ensure data exists in the processed JSONL files.")
         exit()
@@ -139,7 +140,7 @@ if __name__ == "__main__":
         print(test_results)
     else:
         print("No test dataset available for evaluation.")
-
+    
     # 7. Save Model
     print(f"Saving model to {OUTPUT_DIR}/final_model...")
     trainer.save_model(os.path.join(OUTPUT_DIR, "final_model"))
@@ -157,5 +158,3 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"Warning: Could not save model to Google Drive. Error: {e}")
         print("Model is only saved locally in the Colab session and will be deleted after session ends.")
-```
-
