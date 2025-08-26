@@ -82,7 +82,7 @@ if __name__ == "__main__":
 
     print(f"Total training examples: {len(raw_datasets['train'])}")
     if 'validation' in raw_datasets:
-        print(f"Total validation examples: {len(raw_datasets['validation')}")
+        print(f"Total validation examples: {len(raw_datasets['validation'])}")
     if 'test' in raw_datasets:
         print(f"Total test examples: {len(raw_datasets['test'])}")
     print("Dataset loaded. Example entry from training set:")
