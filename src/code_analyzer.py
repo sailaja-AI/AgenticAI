@@ -44,7 +44,7 @@ class CodeAnalyzer:
 
         print(f"Generated embedding of shape: {embedding.shape}")
         return {"embedding": embedding}
-```
+
 FINE_TUNED_MODEL_PATH = "./results_codebert/final_model/"
 
 class CodeAnalyzer:
