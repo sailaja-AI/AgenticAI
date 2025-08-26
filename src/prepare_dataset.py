@@ -9,9 +9,10 @@ import shutil # Import shutil for directory operations
 # IMPORTANT: Update this if your Google Drive structure is different or you are running locally
 GOOGLE_DRIVE_DATA_BASE_PATH = "/content/drive/MyDrive/AgentAI_Data"
 
-# Raw data input paths (adjust these if your raw data is structured differently in Drive)
-RAW_CLEAN_DIR = os.path.join(GOOGLE_DRIVE_DATA_BASE_PATH, "processed", "train") # Assuming your clean .py files are here
-RAW_VULNERABLE_DIR = os.path.join(GOOGLE_DRIVE_DATA_BASE_PATH, "SATE-IV") # Assuming your vulnerable .py files are here
+# --- CORRECTED RAW DATA INPUT PATHS ---
+# These now point to the actual nested directories after unzipping into /tmp
+RAW_CLEAN_DIR = "/tmp/raw_clean_extracted/processed/train" # Point to the nested 'train' folder
+RAW_VULNERABLE_DIR = "/tmp/raw_vulnerable_extracted/SATE-IV" # Point to the nested 'SATE-IV' folder
 
 # Processed data output path (where train.jsonl, val.jsonl, test.jsonl will be saved)
 PROCESSED_DATA_OUTPUT_DIR = os.path.join(GOOGLE_DRIVE_DATA_BASE_PATH, "processed_jsonl")

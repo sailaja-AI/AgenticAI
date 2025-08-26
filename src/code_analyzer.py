@@ -11,16 +11,26 @@ class CodeAnalyzer:
     Analyzes source code using transformer-based models for semantic understanding.
     """
     def __init__(self):
-        # We no longer need config_path. We point directly to our fine-tuned model.
         model_path = FINE_TUNED_MODEL_PATH
 
         if not os.path.exists(model_path):
             raise FileNotFoundError(f"Fine-tuned model not found at {model_path}. Please run fine_tune_codebert.py first.")
 
         print(f"Loading fine-tuned model from: {model_path}...")
-        # Load the tokenizer and the base model from the fine-tuned directory.
-        # The `AutoModel` class will load the base transformer, which is what we need for embeddings.
+
+        # --- MODIFIED LOADING LOGIC ---
+        # Check for model.safetensors first, then pytorch_model.bin
+        model_weights_file = None
+        if os.path.exists(os.path.join(model_path, "model.safetensors")):
+            model_weights_file = "model.safetensors"
+        elif os.path.exists(os.path.join(model_path, "pytorch_model.bin")):
+            model_weights_file = "pytorch_model.bin"
+        else:
+            raise FileNotFoundError(f"No model weights found (neither model.safetensors nor pytorch_model.bin) in {model_path}.")
+
+        print(f"  Found model weights: {model_weights_file}")
         self.tokenizer = AutoTokenizer.from_pretrained(model_path)
+        # Load the base model. AutoModel should correctly pick up .safetensors
         self.model = AutoModel.from_pretrained(model_path)
         print("Model loaded.")
 
