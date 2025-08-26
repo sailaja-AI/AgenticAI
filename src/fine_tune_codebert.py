@@ -1,11 +1,11 @@
 import torch
 from transformers import AutoTokenizer, AutoModelForSequenceClassification, TrainingArguments, Trainer
-from datasets import Dataset, DatasetDict, load_dataset, concatenate_datasets # Import concatenate_datasets and load_dataset
+from datasets import Dataset, DatasetDict, load_dataset, concatenate_datasets
 from sklearn.metrics import precision_recall_fscore_support, confusion_matrix, accuracy_score
 import numpy as np
 import os
-import shutil # Import shutil for saving models to Drive
-
+import shutil
+from google.colab import files # Import files for local download
 # Configuration
 MODEL_NAME = "microsoft/codebert-base"
 
@@ -82,7 +82,7 @@ if __name__ == "__main__":
 
     print(f"Total training examples: {len(raw_datasets['train'])}")
     if 'validation' in raw_datasets:
-        print(f"Total validation examples: {len(raw_datasets['validation'])}")
+        print(f"Total validation examples: {len(raw_datasets['validation')}")
     if 'test' in raw_datasets:
         print(f"Total test examples: {len(raw_datasets['test'])}")
     print("Dataset loaded. Example entry from training set:")
@@ -104,7 +104,7 @@ if __name__ == "__main__":
     print("Setting up training arguments...")
     training_args = TrainingArguments(
         output_dir=OUTPUT_DIR,
-        eval_strategy="epoch", # CORRECTED: Changed 'evaluation_strategy' to 'eval_strategy'
+        eval_strategy="epoch",
         learning_rate=LEARNING_RATE,
         per_device_train_batch_size=BATCH_SIZE,
         per_device_eval_batch_size=BATCH_SIZE,
@@ -141,20 +141,67 @@ if __name__ == "__main__":
     else:
         print("No test dataset available for evaluation.")
     
-    # 7. Save Model
+    # 7. Save Model locally
     print(f"Saving model to {OUTPUT_DIR}/final_model...")
     trainer.save_model(os.path.join(OUTPUT_DIR, "final_model"))
-    print("Model saved.")
+    print("Model saved locally.")
 
-    print("--- CodeBERT Fine-tuning Complete ---")
+    print("--- Starting Model Download and Persistence ---")
+    # Define Google Drive path for trained models
+    DRIVE_TRAINED_MODELS_PATH = os.path.join(GOOGLE_DRIVE_DATA_BASE_PATH, "trained_models")
+    os.makedirs(DRIVE_TRAINED_MODELS_PATH, exist_ok=True) # Ensure target dir in Drive exists
 
-    # Optional: Save trained model to Google Drive for persistence
-    try:
-        print("Attempting to save trained model to Google Drive...")
-        drive_model_path = os.path.join(GOOGLE_DRIVE_DATA_BASE_PATH, "trained_models", "final_model")
-        os.makedirs(drive_model_path, exist_ok=True)
-        shutil.copytree(os.path.join(OUTPUT_DIR, "final_model"), drive_model_path, dirs_exist_ok=True)
-        print(f"Model saved to Google Drive at {drive_model_path}")
-    except Exception as e:
-        print(f"Warning: Could not save model to Google Drive. Error: {e}")
-        print("Model is only saved locally in the Colab session and will be deleted after session ends.")
+    # --- CodeBERT Model ---
+    codebert_model_local_path = os.path.join(OUTPUT_DIR, "final_model") # Using OUTPUT_DIR for robustness
+    codebert_zip_name = "codebert_final_model.zip"
+    codebert_drive_path = os.path.join(DRIVE_TRAINED_MODELS_PATH, "final_model") # Copy as unzipped folder to Drive
+
+    if os.path.exists(codebert_model_local_path):
+        print(f"Zipping CodeBERT model from {codebert_model_local_path}...")
+        # Zip locally in Colab
+        !zip -r {codebert_zip_name} {codebert_model_local_path}
+        print(f"CodeBERT model zipped as {codebert_zip_name}")
+
+        # Offer for local download
+        try:
+            files.download(codebert_zip_name)
+            print(f"'{codebert_zip_name}' offered for download to local machine.")
+        except Exception as e:
+            print(f"Warning: Could not offer '{codebert_zip_name}' for local download: {e}")
+
+        # Copy to Google Drive for persistence (as an unzipped folder)
+        try:
+            print(f"Copying CodeBERT model to Google Drive at {codebert_drive_path}...")
+            shutil.copytree(codebert_model_local_path, codebert_drive_path, dirs_exist_ok=True)
+            print(f"CodeBERT model saved to Google Drive at {codebert_drive_path}")
+        except Exception as e:
+            print(f"ERROR: Could not save CodeBERT model to Google Drive: {e}")
+            print("This model is only saved locally in the Colab session and will be deleted after session ends.")
+    else:
+        print(f"CodeBERT model directory not found at {codebert_model_local_path}. Was training successful?")
+
+    # --- RL Model ---
+    rl_model_local_path = "rl_model.zip"
+    rl_model_drive_path = os.path.join(DRIVE_TRAINED_MODELS_PATH, rl_model_local_path)
+
+    if os.path.exists(rl_model_local_path):
+        print(f"RL model found at {rl_model_local_path}")
+        # Offer for local download
+        try:
+            files.download(rl_model_local_path)
+            print(f"'{rl_model_local_path}' offered for download to local machine.")
+        except Exception as e:
+            print(f"Warning: Could not offer '{rl_model_local_path}' for local download: {e}")
+
+        # Copy to Google Drive for persistence
+        try:
+            print(f"Copying RL model to Google Drive at {rl_model_drive_path}...")
+            shutil.copy(rl_model_local_path, rl_model_drive_path)
+            print(f"RL model saved to Google Drive at {rl_model_drive_path}")
+        except Exception as e:
+            print(f"ERROR: Could not save RL model to Google Drive: {e}")
+            print("This model is only saved locally in the Colab session and will be deleted after session ends.")
+    else:
+        print(f"RL model '{rl_model_local_path}' not found. Was training successful?")
+
+    print("--- Model Download and Persistence Complete ---")
