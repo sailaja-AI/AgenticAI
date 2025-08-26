@@ -6,8 +6,7 @@ class VulnerabilityDetectorAgent:
     An agent that detects security flaws in source code.
     """
     def __init__(self):
-        self.analyzer = CodeAnalyzer()
-
+        self.analyzer = CodeAnalyzer() # This will load the model as configured in config.yaml
     def find_vulnerabilities(self, file_path):
         """
         Scans a Python file for potential vulnerabilities.
@@ -39,4 +38,5 @@ class VulnerabilityDetectorAgent:
                         vulnerabilities.append(vulnerability)
                         
         return vulnerabilities
+```
 

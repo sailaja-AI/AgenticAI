@@ -26,7 +26,7 @@ PROCESSED_DATA_OUTPUT_DIR = os.path.join(GOOGLE_DRIVE_DATA_BASE_PATH, "processed
 OUTPUT_DIR = "./results_codebert" # Stored locally in Colab session initially
 BATCH_SIZE = 16
 LEARNING_RATE = 2e-5
-NUM_EPOCHS = 1 # Reduced epochs for faster testing
+NUM_EPOCHS = 10 # Reduced epochs for faster testing
 
 def tokenize_function(examples):
     global tokenizer # Access the tokenizer defined in the main block
