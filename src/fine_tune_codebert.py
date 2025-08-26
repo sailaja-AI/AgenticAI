@@ -5,7 +5,16 @@ from sklearn.metrics import precision_recall_fscore_support, confusion_matrix, a
 import numpy as np
 import os
 import shutil
-from google.colab import files # Import files for local download
+import subprocess # NEW: Import subprocess module
+
+# Try to import files for Colab download, and set a flag
+IS_COLAB = False
+try:
+    from google.colab import files
+    IS_COLAB = True
+except ImportError:
+    print("Running outside Google Colab. File download functionality will be skipped.")
+
 # Configuration
 MODEL_NAME = "microsoft/codebert-base"
 
@@ -158,16 +167,30 @@ if __name__ == "__main__":
 
     if os.path.exists(codebert_model_local_path):
         print(f"Zipping CodeBERT model from {codebert_model_local_path}...")
-        # Zip locally in Colab
-        !zip -r {codebert_zip_name} {codebert_model_local_path}
-        print(f"CodeBERT model zipped as {codebert_zip_name}")
-
-        # Offer for local download
+        
+        # Use subprocess.run for shell commands instead of !magic_command
+        codebert_zip_successful = False
         try:
-            files.download(codebert_zip_name)
-            print(f"'{codebert_zip_name}' offered for download to local machine.")
+            subprocess.run(["zip", "-r", codebert_zip_name, codebert_model_local_path], check=True)
+            print(f"CodeBERT model zipped as {codebert_zip_name}")
+            codebert_zip_successful = True
+        except FileNotFoundError:
+            print("Error: 'zip' command not found. Please ensure zip is installed and in your system PATH.")
+            print("Skipping zipping and local download for CodeBERT model.")
+        except subprocess.CalledProcessError as e:
+            print(f"Error zipping CodeBERT model: {e}")
+            print("Skipping local download for CodeBERT model.")
         except Exception as e:
-            print(f"Warning: Could not offer '{codebert_zip_name}' for local download: {e}")
+            print(f"An unexpected error occurred during zipping CodeBERT model: {e}")
+            print("Skipping local download for CodeBERT model.")
+
+        # Offer for local download only if running in Colab and zipping was successful
+        if IS_COLAB and codebert_zip_successful:
+            try:
+                files.download(codebert_zip_name)
+                print(f"'{codebert_zip_name}' offered for download to local machine.")
+            except Exception as e:
+                print(f"Warning: Could not offer '{codebert_zip_name}' for local download: {e}")
 
         # Copy to Google Drive for persistence (as an unzipped folder)
         try:
@@ -181,17 +204,18 @@ if __name__ == "__main__":
         print(f"CodeBERT model directory not found at {codebert_model_local_path}. Was training successful?")
 
     # --- RL Model ---
-    rl_model_local_path = "rl_model.zip"
+    rl_model_local_path = "rl_model.zip" # This assumes rl_model.zip is created elsewhere
     rl_model_drive_path = os.path.join(DRIVE_TRAINED_MODELS_PATH, rl_model_local_path)
 
     if os.path.exists(rl_model_local_path):
         print(f"RL model found at {rl_model_local_path}")
-        # Offer for local download
-        try:
-            files.download(rl_model_local_path)
-            print(f"'{rl_model_local_path}' offered for download to local machine.")
-        except Exception as e:
-            print(f"Warning: Could not offer '{rl_model_local_path}' for local download: {e}")
+        # Offer for local download only if running in Colab
+        if IS_COLAB:
+            try:
+                files.download(rl_model_local_path)
+                print(f"'{rl_model_local_path}' offered for download to local machine.")
+            except Exception as e:
+                print(f"Warning: Could not offer '{rl_model_local_path}' for local download: {e}")
 
         # Copy to Google Drive for persistence
         try:
