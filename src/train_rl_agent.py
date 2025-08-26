@@ -1,9 +1,12 @@
 from stable_baselines3 import PPO
 from .environment import PatchSuggestionEnv
 from .static_analysis_agent import StaticAnalysisAgent
+# Import CodeAnalyzer and necessary transformers components
 from .code_analyzer import CodeAnalyzer
-import torch # Make sure torch is imported for tensor operations
+from transformers import AutoTokenizer, AutoModel # ADDED AutoTokenizer, AutoModel
+import torch 
 import os
+import shutil # Added shutil for copying to Drive
 
 # --- CONFIGURATION ---
 FILE_TO_SCAN = "vulnerable_app.py" # Using a known vulnerable file for training environment
@@ -37,8 +40,8 @@ class CodeAnalyzerForRL(CodeAnalyzer):
 
         print(f"  Found model weights: {model_weights_file}")
 
-        self.tokenizer = AutoTokenizer.from_pretrained(model_path)
-        self.model = AutoModel.from_pretrained(model_path)
+        self.tokenizer = AutoTokenizer.from_pretrained(model_path) # AutoTokenizer is now imported
+        self.model = AutoModel.from_pretrained(model_path) # AutoModel is now imported
         print("CodeBERT Model loaded for RL agent.")
 
 def train_agent():
