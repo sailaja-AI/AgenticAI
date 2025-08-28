@@ -33,38 +33,31 @@ class CodeAnalyzer:
             asset_name = config.get('github_release_asset_name')
             local_cache_relative_path = config.get('local_model_cache_dir')
 
-            if not all([repo_owner, repo_name, release_tag, asset_name, local_cache_relative_path]):
+            if not all([repo_owner, repo_name, release_tag, asset_name, local_cache_relative_path):
                 raise ValueError("GitHub Release model configuration (github_repo_owner, github_repo_name, github_release_tag, github_release_asset_name, local_model_cache_dir) must be specified in config.yaml for classifier mode.")
             
-            # Construct the intended final model directory
             model_path_base = os.path.join(project_root, local_cache_relative_path)
 
-            # This is the path we will pass to from_pretrained.
-            # It might need to be adjusted if the zip contains a subdir.
             final_model_load_path = model_path_base
 
-            # Check if the model is already downloaded and extracted AND correctly structured
             if not os.path.exists(os.path.join(final_model_load_path, "config.json")):
                 print(f"Fine-tuned classifier model not found locally or not correctly structured at: {final_model_load_path}.")
                 print(f"Attempting to download and extract from GitHub Release {release_tag}...")
 
-                # Call download logic
                 self._download_and_extract_github_release_asset(
-                    repo_owner, repo_name, release_tag, asset_name, model_path_base # Pass the intended base cache dir
+                    repo_owner, repo_name, release_tag, asset_name, model_path_base
                 )
 
-                # After extraction, check for a common case: single subdirectory inside the zip
                 if not os.path.exists(os.path.join(model_path_base, "config.json")):
-                    # It's possible the zip contains a single folder (e.g., 'final_model/' inside 'final_model.zip')
-                    # We need to find that subdirectory and use it as the actual model_path
-                    subdirs = [d for d in glob.glob(os.path.join(model_path_base, '*')) if os.path.isdir(d)]
+                    subdirs = [d for d in glob.glob(os.path.join(model_path_base, '*')) if os.path.isdir(d)
                     if len(subdirs) == 1 and os.path.exists(os.path.join(subdirs[0], "config.json")):
-                        final_model_load_path = subdirs[0] # Corrected missing bracket
+                        final_model_load_path = subdirs[0]
                         print(f"Detected model files in subdirectory: {final_model_load_path}. Adjusting load path.")
                     else:
                         raise FileNotFoundError(f"Model files (config.json) not found in expected location '{model_path_base}' or a single subdirectory after extraction. Please check zip file structure.")
             else:
                 print(f"Fine-tuned classifier model found locally and correctly structured at: {final_model_load_path}. Skipping download.")
+
             print(f"Loading fine-tuned classifier model from: {final_model_load_path} on device: {self.device}...")
             self.tokenizer = AutoTokenizer.from_pretrained(final_model_load_path)
             self.model = AutoModelForSequenceClassification.from_pretrained(final_model_load_path)
@@ -99,7 +92,7 @@ class CodeAnalyzer:
         asset_download_url = None
         for asset in release_info.get("assets", []):
             if asset["name"] == asset_name:
-                asset_download_url = asset["browser_download_url"] # Corrected missing bracket
+                asset_download_url = asset["browser_download_url"]
                 break
 
         if not asset_download_url:
@@ -113,7 +106,7 @@ class CodeAnalyzer:
 
         with zipfile.ZipFile(io.BytesIO(asset_response.content)) as zf:
             print(f"Extracting '{asset_name}' to '{target_base_dir}'...")
-            zf.extractall(target_base_dir) # Extract to the base directory
+            zf.extractall(target_base_dir)
             print("Extraction complete.")
 
     def analyze_snippet(self, code_snippet):
@@ -123,11 +116,11 @@ class CodeAnalyzer:
         """
         if not code_snippet or not code_snippet.strip():
         if self.is_classifier:
-                return {"prediction": 0, "confidence_scores": [1.0, 0.0}
+                return {"prediction": 0, "confidence_scores": [1.0, 0.0]}
         else:
                 return {"embedding": torch.zeros(self.model.config.hidden_size).to(self.device)}
 
-        display_snippet = code_snippet[:60.replace('\n', ' ')
+        display_snippet = code_snippet[:60].replace('\n', ' ')
         print(f"Analyzing snippet: {display_snippet}...")
 
         inputs = self.tokenizer(code_snippet, return_tensors="pt", truncation=True, max_length=512, padding=True).to(self.device)
@@ -143,3 +136,4 @@ class CodeAnalyzer:
         else:
             embedding = outputs.last_hidden_state[:, 0, :].squeeze()
             return {"embedding": embedding}
+
