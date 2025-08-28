@@ -115,10 +115,10 @@ class CodeAnalyzer:
         Returns a vector embedding or a prediction (0/1) and confidence scores.
         """
         if not code_snippet or not code_snippet.strip():
-        if self.is_classifier:
-                return {"prediction": 0, "confidence_scores": [1.0, 0.0]}
-        else:
-                return {"embedding": torch.zeros(self.model.config.hidden_size).to(self.device)}
+            if self.is_classifier:
+                    return {"prediction": 0, "confidence_scores": [1.0, 0.0]}
+            else:
+                    return {"embedding": torch.zeros(self.model.config.hidden_size).to(self.device)}
 
         display_snippet = code_snippet[:60].replace('\n', ' ')
         print(f"Analyzing snippet: {display_snippet}...")
