@@ -33,7 +33,7 @@ class CodeAnalyzer:
             asset_name = config.get('github_release_asset_name')
             local_cache_relative_path = config.get('local_model_cache_dir')
 
-            if not all([repo_owner, repo_name, release_tag, asset_name, local_cache_relative_path):
+            if not all([repo_owner, repo_name, release_tag, asset_name, local_cache_relative_path]):
                 raise ValueError("GitHub Release model configuration (github_repo_owner, github_repo_name, github_release_tag, github_release_asset_name, local_model_cache_dir) must be specified in config.yaml for classifier mode.")
             
             model_path_base = os.path.join(project_root, local_cache_relative_path)
