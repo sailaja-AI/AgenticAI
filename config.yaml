@@ -11,5 +11,4 @@ vulnerability_patterns:
     # We will detect code like subprocess.call(..., shell=True)
     description: "Using shell=True with subprocess can lead to shell injection."
     cwe: "CWE-78"
-```
 
