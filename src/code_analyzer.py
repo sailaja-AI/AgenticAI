@@ -61,8 +61,9 @@ class CodeAnalyzer:
             else:
                 return {"embedding": torch.zeros(self.model.config.hidden_size).to(self.device)}
 
-            # CORRECTED LINE HERE:
-        print(f"Analyzing snippet: {code_snippet[:60].replace('\n', ' ')}...")
+        # CORRECTED LINE HERE: Create the display_snippet first, then use it in the f-string
+        display_snippet = code_snippet[:60].replace('\n', ' ')
+        print(f"Analyzing snippet: {display_snippet}...")
         inputs = self.tokenizer(code_snippet, return_tensors="pt", truncation=True, max_length=512, padding=True).to(self.device)
 
         with torch.no_grad():
