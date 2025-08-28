@@ -76,5 +76,3 @@ class CodeAnalyzer:
             embedding = outputs.last_hidden_state[:, 0, :].squeeze()
         return {"embedding": embedding}
 
-```
-
