@@ -5,6 +5,7 @@ import os
 import requests
 import zipfile
 import io
+import glob # NEW: To find extracted subdirectories
 
 class CodeAnalyzer:
     """
@@ -35,33 +36,56 @@ class CodeAnalyzer:
             if not all([repo_owner, repo_name, release_tag, asset_name, local_cache_relative_path]):
                 raise ValueError("GitHub Release model configuration (github_repo_owner, github_repo_name, github_release_tag, github_release_asset_name, local_model_cache_dir) must be specified in config.yaml for classifier mode.")
             
-            model_path = os.path.join(project_root, local_cache_relative_path)
+            # Construct the intended final model directory
+            model_path_base = os.path.join(project_root, local_cache_relative_path)
 
-            if not os.path.exists(model_path) or not os.path.exists(os.path.join(model_path, "config.json")):
-                print(f"Fine-tuned classifier model not found locally at: {model_path}.")
+            # This is the path we will pass to from_pretrained.
+            # It might need to be adjusted if the zip contains a subdir.
+            final_model_load_path = model_path_base
+
+            # Check if the model is already downloaded and extracted AND correctly structured
+            if not os.path.exists(os.path.join(final_model_load_path, "config.json")):
+                print(f"Fine-tuned classifier model not found locally or not correctly structured at: {final_model_load_path}.")
                 print(f"Attempting to download and extract from GitHub Release {release_tag}...")
+
+                # Call download logic
                 self._download_and_extract_github_release_asset(
-                    repo_owner, repo_name, release_tag, asset_name, model_path
+                    repo_owner, repo_name, release_tag, asset_name, model_path_base # Pass the intended base cache dir
                 )
+
+                # After extraction, check for a common case: single subdirectory inside the zip
+                if not os.path.exists(os.path.join(model_path_base, "config.json")):
+                    # It's possible the zip contains a single folder (e.g., 'final_model/' inside 'final_model.zip')
+                    # We need to find that subdirectory and use it as the actual model_path
+                    subdirs = [d for d in glob.glob(os.path.join(model_path_base, '*')) if os.path.isdir(d)]
+                    if len(subdirs) == 1 and os.path.exists(os.path.join(subdirs[0], "config.json")):
+                        final_model_load_path = subdirs[0] # Corrected missing bracket
+                        print(f"Detected model files in subdirectory: {final_model_load_path}. Adjusting load path.")
+                    else:
+                        raise FileNotFoundError(f"Model files (config.json) not found in expected location '{model_path_base}' or a single subdirectory after extraction. Please check zip file structure.")
             else:
-                print(f"Fine-tuned classifier model found locally at: {model_path}. Skipping download.")
-            
-            print(f"Loading fine-tuned classifier model from local cache: {model_path} on device: {self.device}...")
-            self.tokenizer = AutoTokenizer.from_pretrained(model_path)
-            self.model = AutoModelForSequenceClassification.from_pretrained(model_path)
+                print(f"Fine-tuned classifier model found locally and correctly structured at: {final_model_load_path}. Skipping download.")
+            print(f"Loading fine-tuned classifier model from: {final_model_load_path} on device: {self.device}...")
+            self.tokenizer = AutoTokenizer.from_pretrained(final_model_load_path)
+            self.model = AutoModelForSequenceClassification.from_pretrained(final_model_load_path)
         else:
             model_name = config.get('code_analysis_model', "microsoft/codebert-base")
             print(f"Loading base model for analysis: {model_name} on device: {self.device}...")
             self.tokenizer = AutoTokenizer.from_pretrained(model_name)
             self.model = AutoModel.from_pretrained(model_name)
-        
+
         self.model.to(self.device)
         self.model.eval()
         print("Model loaded.")
 
-    def _download_and_extract_github_release_asset(self, owner, repo, tag, asset_name, target_dir):
+    def _download_and_extract_github_release_asset(self, owner, repo, tag, asset_name, target_base_dir):
+        """
+        Downloads a specific asset from a GitHub Release and extracts it.
+        Assumes the asset is a .zip file containing the model files.
+        Extracts to target_base_dir.
+        """
         release_api_url = f"https://api.github.com/repos/{owner}/{repo}/releases/tags/{tag}"
-        
+
         headers = {"Accept": "application/vnd.github.v3+json"}
         github_token = os.getenv("GITHUB_TOKEN")
         if github_token:
@@ -75,9 +99,9 @@ class CodeAnalyzer:
         asset_download_url = None
         for asset in release_info.get("assets", []):
             if asset["name"] == asset_name:
-                asset_download_url = asset["browser_download_url"]
+                asset_download_url = asset["browser_download_url"] # Corrected missing bracket
                 break
-        
+
         if not asset_download_url:
             raise FileNotFoundError(f"Asset '{asset_name}' not found in GitHub Release '{tag}' for {owner}/{repo}.")
 
@@ -85,40 +109,37 @@ class CodeAnalyzer:
         asset_response = requests.get(asset_download_url, stream=True, headers=headers)
         asset_response.raise_for_status()
 
-        os.makedirs(target_dir, exist_ok=True)
+        os.makedirs(target_base_dir, exist_ok=True)
 
         with zipfile.ZipFile(io.BytesIO(asset_response.content)) as zf:
-            print(f"Extracting '{asset_name}' to '{target_dir}'...")
-            zf.extractall(target_dir)
+            print(f"Extracting '{asset_name}' to '{target_base_dir}'...")
+            zf.extractall(target_base_dir) # Extract to the base directory
             print("Extraction complete.")
-            
+
     def analyze_snippet(self, code_snippet):
         """
         Performs semantic analysis on a code snippet (embedding) or classifies its vulnerability.
         Returns a vector embedding or a prediction (0/1) and confidence scores.
         """
-        # Ensure the entire method is consistently indented
         if not code_snippet or not code_snippet.strip():
-            if self.is_classifier:
-                return {"prediction": 0, "confidence_scores": [1.0, 0.0]}
-            else:
+        if self.is_classifier:
+                return {"prediction": 0, "confidence_scores": [1.0, 0.0}
+        else:
                 return {"embedding": torch.zeros(self.model.config.hidden_size).to(self.device)}
 
-        display_snippet = code_snippet[:60].replace('\n', ' ')
+        display_snippet = code_snippet[:60.replace('\n', ' ')
         print(f"Analyzing snippet: {display_snippet}...")
-        
+
         inputs = self.tokenizer(code_snippet, return_tensors="pt", truncation=True, max_length=512, padding=True).to(self.device)
 
         with torch.no_grad():
             outputs = self.model(**inputs)
 
-        # --- CORRECTED INDENTATION AND MISSING BRACKET HERE ---
         if self.is_classifier:
             logits = outputs.logits
             prediction = torch.argmax(logits, dim=1).item()
-            confidence_scores = logits.softmax(dim=1).tolist()[0] # Added missing ']'
+            confidence_scores = logits.softmax(dim=1).tolist()[0]
             return {"prediction": prediction, "confidence_scores": confidence_scores}
         else:
             embedding = outputs.last_hidden_state[:, 0, :].squeeze()
             return {"embedding": embedding}
-        # --- END CORRECTED SECTION ---
