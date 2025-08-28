@@ -1,14 +1,17 @@
 # Configuration for Code Analysis models
-code_analysis_model: "microsoft/codebert-base" # This remains the Hugging Face model ID
+code_analysis_model: "microsoft/codebert-base" # This remains the base model for general embeddings
 
-# Configuration for fine-tuned vulnerability detection model
-# THIS PATH MUST BE RELATIVE TO YOUR PROJECT ROOT (e.g., the folder containing 'src' and 'AgentAI_Data')
-fine_tuned_vulnerability_model_path: "AgentAI_Data/trained_models/final_model"
-
+# Configuration for fine-tuned vulnerability detection model from GitHub Release
+github_repo_owner: "sailaja-AI"
+github_repo_name: "AgenticAI"
+github_release_tag: "v1.0.0" # The specific tag of your release
+github_release_asset_name: "final_model.zip" # The exact filename of the zipped model in the release
+local_model_cache_dir: "AgentAI_Data/trained_models/final_model_from_release" # Where to save/extract locally
 # Vulnerability patterns (simple examples for now)
 vulnerability_patterns:
   - name: "Insecure Subprocess Call"
     # We will detect code like subprocess.call(..., shell=True)
     description: "Using shell=True with subprocess can lead to shell injection."
     cwe: "CWE-78"
+```
 
