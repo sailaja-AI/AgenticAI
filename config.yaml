@@ -1,5 +1,6 @@
 # Model for semantic code analysis
 code_analysis_model: "microsoft/codebert-base"
+fine_tuned_vulnerability_model_path: "C:/Users/sgonti/Documents/AgenticAI/AgentAI_Data/trained_models/final_model"
 
 # Vulnerability patterns (simple examples for now)
 vulnerability_patterns:
@@ -7,3 +8,4 @@ vulnerability_patterns:
     # We will detect code like subprocess.call(..., shell=True)
     description: "Using shell=True with subprocess can lead to shell injection."
     cwe: "CWE-78"
+
