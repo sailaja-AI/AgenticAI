@@ -22,7 +22,7 @@ class KnowledgeBaseAgent:
                     return json.load(f)
                 except json.JSONDecodeError:
                     print(f"Warning: {self.findings_file} is corrupted. Starting with empty findings.")
-                    return [
+                    return []
         return []
 
     def _save_findings(self):
