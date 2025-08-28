@@ -1,6 +1,9 @@
-# Model for semantic code analysis
-code_analysis_model: "microsoft/codebert-base"
-fine_tuned_vulnerability_model_path: "C:/Users/sgonti/Documents/AgenticAI/AgentAI_Data/trained_models/final_model"
+# Configuration for Code Analysis models
+code_analysis_model: "microsoft/codebert-base" # This remains the Hugging Face model ID
+
+# Configuration for fine-tuned vulnerability detection model
+# THIS PATH MUST BE RELATIVE TO YOUR PROJECT ROOT (e.g., the folder containing 'src' and 'AgentAI_Data')
+fine_tuned_vulnerability_model_path: "AgentAI_Data/trained_models/final_model"
 
 # Vulnerability patterns (simple examples for now)
 vulnerability_patterns:
@@ -8,4 +11,5 @@ vulnerability_patterns:
     # We will detect code like subprocess.call(..., shell=True)
     description: "Using shell=True with subprocess can lead to shell injection."
     cwe: "CWE-78"
+```
 

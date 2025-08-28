@@ -28,12 +28,10 @@ class CodeAnalyzer:
             if not model_path_from_config:
                 raise ValueError("fine_tuned_vulnerability_model_path not specified in config.yaml for classifier mode.")
 
-            # Ensure model_path is absolute and uses correct separators
-            if not os.path.isabs(model_path_from_config):
-                model_path = os.path.join(project_root, model_path_from_config)
-            else:
-                model_path = model_path_from_config
-
+            # --- CORRECTED PATH RESOLUTION LOGIC HERE ---
+            # Always join the path from config with the project_root for local files
+            model_path = os.path.join(project_root, model_path_from_config)
+            # --- END CORRECTED LOGIC ---
             if not os.path.exists(model_path):
                 raise FileNotFoundError(f"Fine-tuned classifier model not found at: {model_path}")
 
@@ -61,9 +59,9 @@ class CodeAnalyzer:
             else:
                 return {"embedding": torch.zeros(self.model.config.hidden_size).to(self.device)}
 
-        # CORRECTED LINE HERE: Create the display_snippet first, then use it in the f-string
         display_snippet = code_snippet[:60].replace('\n', ' ')
         print(f"Analyzing snippet: {display_snippet}...")
+
         inputs = self.tokenizer(code_snippet, return_tensors="pt", truncation=True, max_length=512, padding=True).to(self.device)
 
         with torch.no_grad():
@@ -77,4 +75,6 @@ class CodeAnalyzer:
         else:
             embedding = outputs.last_hidden_state[:, 0, :].squeeze()
         return {"embedding": embedding}
+
+```
 
