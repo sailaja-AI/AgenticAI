@@ -49,7 +49,7 @@ class CodeAnalyzer:
                 )
 
                 if not os.path.exists(os.path.join(model_path_base, "config.json")):
-                    subdirs = [d for d in glob.glob(os.path.join(model_path_base, '*')) if os.path.isdir(d)
+                    subdirs = [d for d in glob.glob(os.path.join(model_path_base, '*')) if os.path.isdir(d)]
                     if len(subdirs) == 1 and os.path.exists(os.path.join(subdirs[0], "config.json")):
                         final_model_load_path = subdirs[0]
                         print(f"Detected model files in subdirectory: {final_model_load_path}. Adjusting load path.")
